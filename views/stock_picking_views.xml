@@ -1,0 +1,433 @@
+<odoo>
+    <record id="view_picking_tree_priority" model="ir.ui.view">
+        <field name="name">stock.picking.tree.priority</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.vpicktree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_recalculate_ai_priority" type="object" string="Recalculate Priority"
+                    class="btn-secondary" display="always" groups="stock.group_stock_user"/>
+                <button name="action_open_priority_score_queue" type="object" string="Sort by Priority Score"
+                    class="btn-secondary" display="always" groups="stock.group_stock_user"/>
+            </xpath>
+            <xpath expr="//field[@name='scheduled_date']" position="after">
+                <button name="action_open_ai_priority_popup" type="object" string="AI Insight"
+                    class="btn-link" icon="fa-info-circle"/>
+                <field name="x_manual_priority_rank_display" string="Manual Rank" optional="show"/>
+                <field name="x_display_priority_rank" string="Final Rank" optional="show" invisible="state in ('done', 'cancel')"/>
+                <field name="x_ai_priority_rank" string="Priority Rank" optional="show" invisible="state in ('done', 'cancel')"/>
+                <field name="x_ai_priority_score" string="Priority Score (%)" optional="show" invisible="state in ('done', 'cancel')"/>
+                <field name="x_ai_priority_bucket" string="Priority Bucket" widget="badge" optional="show"
+                    decoration-danger="x_ai_priority_bucket == 'critical'"
+                    decoration-warning="x_ai_priority_bucket == 'high'"
+                    decoration-info="x_ai_priority_bucket == 'medium'"
+                    decoration-success="x_ai_priority_bucket == 'low'"/>
+                <field name="x_ai_recommended_action" string="Recommended Action" optional="hide"/>
+                <field name="x_ai_stock_gap_summary" string="Stock Gap Summary" optional="hide"/>
+                <field name="x_ai_urgency_level" string="Urgency Level" optional="hide"/>
+                <field name="date_deadline" string="Deadline" optional="hide"/>
+                <field name="x_ai_sla_deadline" string="SLA Deadline" optional="hide"/>
+                <field name="x_ai_last_scored_at" string="Last Scored At" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_picking_tree_priority_manual" model="ir.ui.view">
+        <field name="name">stock.picking.tree.priority.manual</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="odoo_picking_priority.view_picking_tree_priority"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="attributes">
+                <attribute name="default_order">x_ai_manual_override desc, x_manual_priority_rank_display asc, x_ai_priority_score desc, x_ai_sla_deadline asc, create_date asc, id asc</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_picking_tree_priority_score" model="ir.ui.view">
+        <field name="name">stock.picking.tree.priority.score</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="odoo_picking_priority.view_picking_tree_priority"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="attributes">
+                <attribute name="default_order">x_ai_priority_score desc, x_ai_sla_deadline asc, create_date asc, id asc</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_picking_tree_priority_manual" model="ir.actions.act_window">
+        <field name="name">Deliveries</field>
+        <field name="res_model">stock.picking</field>
+        <field name="view_mode">list,kanban,form,calendar,activity</field>
+        <field name="context">{'contact_display': 'partner_address', 'search_default_delivery': 1, 'restricted_picking_type_code': 'outgoing'}</field>
+        <field name="search_view_id" ref="stock.view_picking_internal_search"/>
+    </record>
+
+    <record id="action_picking_tree_priority_score" model="ir.actions.act_window">
+        <field name="name">Deliveries</field>
+        <field name="res_model">stock.picking</field>
+        <field name="view_mode">list,kanban,form,calendar,activity</field>
+        <field name="context">{'contact_display': 'partner_address', 'search_default_delivery': 1, 'restricted_picking_type_code': 'outgoing'}</field>
+        <field name="search_view_id" ref="stock.view_picking_internal_search"/>
+    </record>
+
+    <record id="view_picking_form_priority" model="ir.ui.view">
+        <field name="name">stock.picking.form.priority</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_recalculate_ai_priority" type="object" string="Recalculate Priority"
+                    class="btn-secondary" groups="stock.group_stock_user"/>
+                <button name="action_open_priority_score_queue" type="object" string="Sort by Priority Score"
+                    class="btn-secondary" groups="stock.group_stock_user"/>
+                <button name="action_mark_ai_override" type="object" string="Override Priority"
+                    class="btn-secondary" groups="stock.group_stock_user" invisible="x_ai_manual_override"/>
+                <button name="action_clear_ai_override" type="object" string="Clear Priority Override"
+                    class="btn-secondary" groups="stock.group_stock_user" invisible="not x_ai_manual_override"/>
+                <button name="action_view_ai_priority_history" type="object" string="View Scoring History"
+                    class="btn-secondary" groups="stock.group_stock_user"/>
+            </xpath>
+            <xpath expr="//field[@name='products_availability']" position="after">
+                <field name="x_ai_priority_score" string="Priority Score (%)" readonly="1" invisible="state in ('done', 'cancel')"/>
+                <field name="x_manual_priority_rank_display" string="Manual Rank" readonly="1"/>
+                <field name="x_display_priority_rank" string="Final Rank" readonly="1" invisible="state in ('done', 'cancel')"/>
+                <field name="x_ai_priority_bucket" string="Priority Bucket" readonly="1" widget="badge"/>
+                <field name="x_ai_priority_rank" string="Priority Rank" readonly="1" invisible="state in ('done', 'cancel')"/>
+                <field name="x_ai_recommended_action" string="Recommended Action" readonly="1"/>
+                <field name="x_ai_stock_gap_summary" string="Stock Gap Summary" readonly="1" widget="text"/>
+                <field name="x_ai_priority_reason" string="Priority Explanation" readonly="1" widget="text"/>
+            </xpath>
+            <xpath expr="//field[@name='scheduled_date']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='date_deadline']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="AI Priority Insight">
+                    <group string="Decision Summary">
+                        <group>
+                            <field name="x_manual_priority_rank_display" string="Manual Rank" readonly="1"/>
+                            <field name="x_display_priority_rank" string="Final Rank" readonly="1" invisible="state in ('done', 'cancel')"/>
+                            <field name="x_ai_priority_score" string="Priority Score (%)" readonly="1" invisible="state in ('done', 'cancel')"/>
+                            <field name="x_ai_priority_bucket" string="Priority Bucket" readonly="1" widget="badge"/>
+                            <field name="x_ai_priority_rank" string="Priority Rank" readonly="1" invisible="state in ('done', 'cancel')"/>
+                            <field name="x_ai_recommended_action" string="Recommended Action" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="x_ai_sla_deadline" string="SLA"/>
+                            <field name="x_ai_urgency_level" string="Urgency Level"/>
+                            <field name="x_ai_source_channel" string="Source Channel"/>
+                            <field name="x_ai_manual_override" string="Priority Overridden"/>
+                            <field name="x_ai_override_user_id" string="Override By" readonly="1"/>
+                            <field name="x_ai_override_datetime" string="Override Time" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="AI Insight">
+                        <group>
+                            <field name="x_ai_priority_reason" string="Priority Explanation" readonly="1" widget="text"/>
+                        </group>
+                    </group>
+                    <group string="Operational Context">
+                        <group>
+                            <field name="x_ai_total_demand_qty" string="Total Demand Qty" readonly="1"/>
+                            <field name="x_ai_total_reserved_qty" string="Total Reserved Qty" readonly="1"/>
+                            <field name="x_ai_availability_ratio" string="Availability Ratio (%)" readonly="1"/>
+                            <field name="x_ai_stock_gap_summary" string="Stock Gap Summary" readonly="1" widget="text"/>
+                        </group>
+                        <group>
+                            <field name="products_availability" readonly="1"/>
+                            <field name="priority" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Score Breakdown">
+                        <group>
+                            <field name="x_ai_factor_sla" string="Factor: SLA" readonly="1" widget="priority_factor_tooltip"/>
+                            <field name="x_ai_factor_availability" string="Factor: Availability" readonly="1" widget="priority_factor_tooltip"/>
+                            <field name="x_ai_factor_urgency" string="Factor: Urgency" readonly="1" widget="priority_factor_tooltip"/>
+                            <field name="x_ai_factor_channel" string="Factor: Channel" readonly="1" widget="priority_factor_tooltip"/>
+                        </group>
+                        <group>
+                            <field name="x_ai_factor_dependency" string="Factor: Dependency" readonly="1" widget="priority_factor_tooltip"/>
+                            <field name="x_ai_factor_value" string="Factor: Value" readonly="1" widget="priority_factor_tooltip"/>
+                            <field name="x_ai_complexity_debug_score" string="Factor: Complexity" readonly="1" widget="priority_factor_tooltip"/>
+                            <field name="x_ai_factor_complexity" invisible="1"/>
+                            <field name="x_ai_complexity_product_count" invisible="1"/>
+                            <field name="x_ai_complexity_zone_count" invisible="1"/>
+                            <field name="x_ai_complexity_debug_summary" invisible="1"/>
+                            <field name="x_ai_complexity_debug_details" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="Manual Override">
+                        <field name="x_manual_priority_rank" string="Manual Rank" readonly="not x_ai_manual_override"/>
+                        <field name="x_ai_override_reason" string="Override Reason" placeholder="Why are you overriding the recommended priority?"/>
+                    </group>
+                    <group string="Audit Trail">
+                        <field name="x_ai_log_ids" readonly="1">
+                            <list default_order="scored_at desc">
+                                <field name="scored_at"/>
+                                <field name="score"/>
+                                <field name="rank"/>
+                                <field name="final_human_rank"/>
+                                <field name="bucket"/>
+                                <field name="sla_deadline"/>
+                                <field name="sla_source"/>
+                                <field name="delay_risk"/>
+                                <field name="recommendation_version"/>
+                                <field name="overridden"/>
+                                <field name="override_user_id"/>
+                                <field name="override_reason"/>
+                            </list>
+                        </field>
+                    </group>
+                    <group string="Technical Details" groups="base.group_no_one">
+                        <field name="x_ai_priority_reason_json" string="Priority Reason JSON" readonly="1" widget="text"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wms_ai_priority_config_tree" model="ir.ui.view">
+        <field name="name">wms.ai.priority.config.list</field>
+        <field name="model">wms.ai.priority.config</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence"/>
+                <field name="name"/>
+                <field name="company_id"/>
+                <field name="warehouse_id"/>
+                <field name="weight_max_score"/>
+                <field name="enabled"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_wms_ai_priority_config_form" model="ir.ui.view">
+        <field name="name">wms.ai.priority.config.form</field>
+        <field name="model">wms.ai.priority.config</field>
+        <field name="arch" type="xml">
+            <form string="Priority Config">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                            <field name="company_id"/>
+                            <field name="warehouse_id"/>
+                        </group>
+                        <group>
+                            <field name="weight_max_score"/>
+                            <field name="enabled"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_res_company_form_ai_priority" model="ir.ui.view">
+        <field name="name">res.company.form.ai.priority</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='general_info']/group" position="inside">
+                <group string="Picking Priority">
+                    <field name="x_ai_include_waiting_pickings"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wms_ai_priority_log_tree" model="ir.ui.view">
+        <field name="name">wms.ai.priority.log.list</field>
+        <field name="model">wms.ai.priority.log</field>
+        <field name="arch" type="xml">
+            <list default_order="scored_at desc">
+                <field name="scored_at"/>
+                <field name="action_type"/>
+                <field name="action_message"/>
+                <field name="action_user_id"/>
+                <field name="company_id"/>
+                <field name="picking_id"/>
+                <field name="score"/>
+                <field name="rank"/>
+                <field name="final_human_rank"/>
+                <field name="bucket"/>
+                <field name="overridden"/>
+                <field name="override_user_id"/>
+                <field name="override_reason"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_wms_ai_priority_log_search" model="ir.ui.view">
+        <field name="name">wms.ai.priority.log.search</field>
+        <field name="model">wms.ai.priority.log</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="action_type"/>
+                <field name="action_user_id"/>
+                <field name="company_id"/>
+                <field name="picking_id"/>
+                <filter string="Human Actions" name="human_actions"
+                    domain="[('action_type', '!=', 'picking_recalculated_auto')]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_wms_ai_priority_popup_form" model="ir.ui.view">
+        <field name="name">wms.ai.priority.popup.form</field>
+        <field name="model">wms.ai.priority.popup</field>
+        <field name="arch" type="xml">
+            <form string="AI Insight" create="0" edit="0" delete="0">
+                <sheet>
+                    <group string="Priority Snapshot">
+                        <group>
+                            <field name="picking_id" readonly="1"/>
+                            <field name="x_manual_priority_rank_display" string="Manual Rank" readonly="1"/>
+                            <field name="x_display_priority_rank" string="Final Rank" readonly="1"/>
+                            <field name="x_ai_priority_score" string="Priority Score (%)" readonly="1" invisible="picking_id.state in ('done', 'cancel')"/>
+                            <field name="x_ai_priority_bucket" string="Priority Bucket" readonly="1" widget="badge"/>
+                            <field name="x_ai_priority_rank" string="Priority Rank" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="x_ai_recommended_action" string="Recommended Action" readonly="1"/>
+                            <field name="x_ai_last_scored_at" string="Last Scored At" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="AI Insight">
+                        <field name="x_ai_priority_reason" string="Priority Explanation" readonly="1" widget="text"/>
+                        <field name="x_ai_stock_gap_summary" string="Stock Gap Summary" readonly="1" widget="text"/>
+                    </group>
+                    <group string="Availability">
+                        <group>
+                            <field name="x_ai_total_demand_qty" string="Total Demand Qty" readonly="1"/>
+                            <field name="x_ai_total_reserved_qty" string="Total Reserved Qty" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="x_ai_availability_ratio" string="Availability Ratio (%)" readonly="1"/>
+                        </group>
+                    </group>
+                    <footer>
+                        <button string="Close" class="btn-primary" special="cancel"/>
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_wms_ai_priority_config" model="ir.actions.act_window">
+        <field name="name">Priority Config</field>
+        <field name="res_model">wms.ai.priority.config</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="view_wms_ai_priority_policy_prompt_tree" model="ir.ui.view">
+        <field name="name">wms.ai.priority.policy.prompt.list</field>
+        <field name="model">wms.ai.priority.policy.prompt</field>
+        <field name="arch" type="xml">
+            <list default_order="write_date desc">
+                <field name="name"/>
+                <field name="company_id"/>
+                <field name="warehouse_id"/>
+                <field name="state"/>
+                <field name="validation_status"/>
+                <field name="approved_by_id"/>
+                <field name="approved_at"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_wms_ai_priority_policy_prompt_form" model="ir.ui.view">
+        <field name="name">wms.ai.priority.policy.prompt.form</field>
+        <field name="model">wms.ai.priority.policy.prompt</field>
+        <field name="arch" type="xml">
+            <form string="AI Policy Builder">
+                <header>
+                    <button name="action_generate_preview" type="object" string="Generate Preview"
+                        class="btn-primary" invisible="not prompt_input"/>
+                    <button name="action_apply_policy" type="object" string="Apply Approved Policy"
+                        class="btn-secondary" invisible="state != 'ready'"/>
+                    <button name="action_reset_to_draft" type="object" string="Reset to Draft"
+                        class="btn-secondary" invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,ready,applied"/>
+                </header>
+                <sheet>
+                    <group string="Policy Request">
+                        <group>
+                            <field name="name"/>
+                            <field name="company_id"/>
+                            <field name="warehouse_id"/>
+                            <field name="validation_status" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="approved_by_id" readonly="1"/>
+                            <field name="approved_at" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Natural Language Prompt">
+                        <field name="prompt_input" widget="text"
+                            placeholder="Example: For marketplace orders, prioritize SLA first, then full availability. Internal transfers should stay below customer deliveries unless marked critical."/>
+                    </group>
+                    <group string="Preview Summary">
+                        <field name="preview_summary" readonly="1" widget="text"/>
+                    </group>
+                    <group string="Validation">
+                        <field name="validation_message" readonly="1" widget="text"/>
+                        <field name="apply_note" readonly="1" widget="text"/>
+                    </group>
+                    <group string="Structured Proposal">
+                        <field name="proposal_json" readonly="1" widget="text"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_wms_ai_priority_log" model="ir.actions.act_window">
+        <field name="name">Priority Logs</field>
+        <field name="res_model">wms.ai.priority.log</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="odoo_picking_priority.view_wms_ai_priority_log_search"/>
+        <field name="domain">[('action_type', '!=', 'picking_recalculated_auto')]</field>
+    </record>
+
+    <record id="action_wms_ai_priority_company_settings" model="ir.actions.act_window">
+        <field name="name">Priority Settings</field>
+        <field name="res_model">res.company</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_wms_ai_priority_scheduler" model="ir.actions.act_window">
+        <field name="name">Priority Scheduler</field>
+        <field name="res_model">ir.cron</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('name', '=', 'Recalculate Picking Priorities')]</field>
+    </record>
+
+    <record id="action_wms_ai_priority_policy_prompt" model="ir.actions.act_window">
+        <field name="name">AI Policy Builder</field>
+        <field name="res_model">wms.ai.priority.policy.prompt</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_wms_ai_priority_root" name="Picking Priority"
+        parent="stock.menu_stock_config_settings" sequence="95" groups="stock.group_stock_user"/>
+    <menuitem id="menu_wms_ai_priority_config" name="Configuration"
+        parent="menu_wms_ai_priority_root" action="action_wms_ai_priority_config"
+        sequence="10" groups="stock.group_stock_manager"/>
+    <menuitem id="menu_wms_ai_priority_logs" name="Audit Logs"
+        parent="menu_wms_ai_priority_root" action="action_wms_ai_priority_log"
+        sequence="20" groups="stock.group_stock_user"/>
+    <menuitem id="menu_wms_ai_priority_policy_prompt" name="AI Policy Builder"
+        parent="menu_wms_ai_priority_root" action="action_wms_ai_priority_policy_prompt"
+        sequence="12" groups="stock.group_stock_manager"/>
+    <menuitem id="menu_wms_ai_priority_settings" name="Settings"
+        parent="menu_wms_ai_priority_root" action="action_wms_ai_priority_company_settings"
+        sequence="5" groups="stock.group_stock_manager"/>
+    <menuitem id="menu_wms_ai_priority_scheduler" name="Scheduler"
+        parent="menu_wms_ai_priority_root" action="action_wms_ai_priority_scheduler"
+        sequence="15" groups="stock.group_stock_manager"/>
+</odoo>

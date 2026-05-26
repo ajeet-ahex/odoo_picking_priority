@@ -1,0 +1,67 @@
+<odoo noupdate="1">
+    <record id="config_priority_sla" model="wms.ai.priority.config">
+        <field name="name">SLA / Deadline</field>
+        <field name="sequence">1</field>
+        <field name="factor_name">sla</field>
+        <field name="weight_max_score">30</field>
+        <field name="enabled">True</field>
+    </record>
+
+    <record id="config_priority_availability" model="wms.ai.priority.config">
+        <field name="name">Availability</field>
+        <field name="sequence">2</field>
+        <field name="factor_name">availability</field>
+        <field name="weight_max_score">20</field>
+        <field name="enabled">True</field>
+    </record>
+
+    <record id="config_priority_urgency" model="wms.ai.priority.config">
+        <field name="name">Urgency</field>
+        <field name="sequence">3</field>
+        <field name="factor_name">urgency</field>
+        <field name="weight_max_score">15</field>
+        <field name="enabled">True</field>
+    </record>
+
+    <record id="config_priority_channel" model="wms.ai.priority.config">
+        <field name="name">Channel</field>
+        <field name="sequence">4</field>
+        <field name="factor_name">channel</field>
+        <field name="weight_max_score">10</field>
+        <field name="enabled">True</field>
+    </record>
+
+    <record id="config_priority_dependency" model="wms.ai.priority.config">
+        <field name="name">Dependency</field>
+        <field name="sequence">5</field>
+        <field name="factor_name">dependency</field>
+        <field name="weight_max_score">10</field>
+        <field name="enabled">True</field>
+    </record>
+
+    <record id="config_priority_value" model="wms.ai.priority.config">
+        <field name="name">Business Value</field>
+        <field name="sequence">6</field>
+        <field name="factor_name">value</field>
+        <field name="weight_max_score">10</field>
+        <field name="enabled">True</field>
+    </record>
+
+    <record id="config_priority_complexity" model="wms.ai.priority.config">
+        <field name="name">Complexity / Quick Win</field>
+        <field name="sequence">7</field>
+        <field name="factor_name">complexity</field>
+        <field name="weight_max_score">5</field>
+        <field name="enabled">True</field>
+    </record>
+
+    <record id="ir_cron_recalculate_ai_picking_priorities" model="ir.cron">
+        <field name="name">Recalculate Picking Priorities</field>
+        <field name="model_id" ref="stock.model_stock_picking"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_recalculate_ai_priority()</field>
+        <field name="interval_number">10</field>
+        <field name="interval_type">minutes</field>
+        <field name="active">True</field>
+    </record>
+</odoo>

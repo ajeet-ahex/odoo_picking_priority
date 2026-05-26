@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_customer_sla" model="ir.ui.view">
+        <field name="name">res.partner.form.customer.sla</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='category_id']" position="after">
+                <field name="x_customer_sla_days" string="Customer SLA (Days)"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

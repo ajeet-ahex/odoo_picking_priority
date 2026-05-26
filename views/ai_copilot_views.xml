@@ -1,0 +1,209 @@
+<odoo>
+    <record id="view_picking_form_ai_copilot" model="ir.ui.view">
+        <field name="name">stock.picking.form.ai.copilot</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="odoo_picking_priority.view_picking_form_priority"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_view_ai_priority_history']" position="after">
+                <button name="action_open_ai_picking_assistant" type="object" string="Ask AI"
+                    class="btn-secondary" groups="stock.group_stock_user"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_wms_ai_picking_assistant_form" model="ir.ui.view">
+        <field name="name">wms.ai.picking.assistant.form</field>
+        <field name="model">wms.ai.picking.assistant</field>
+        <field name="arch" type="xml">
+            <form string="Ask AI" create="0" delete="0">
+                <header>
+                    <button name="action_ask_ai" type="object" string="Ask AI" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <group string="Question">
+                        <field name="picking_id" readonly="1"/>
+                        <field name="question" widget="text"/>
+                    </group>
+                    <group string="AI Answer">
+                        <field name="response_status" readonly="1"/>
+                        <field name="answer_text" readonly="1" widget="text"/>
+                    </group>
+                    <group string="Context Snapshot" groups="stock.group_stock_manager">
+                        <field name="prompt_context" readonly="1" widget="text"/>
+                    </group>
+                    <footer>
+                        <button string="Close" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_wms_ai_priority_queue_summary_form" model="ir.ui.view">
+        <field name="name">wms.ai.priority.queue.summary.form</field>
+        <field name="model">wms.ai.priority.queue.summary</field>
+        <field name="arch" type="xml">
+            <form string="AI Queue Summary" create="0" delete="0">
+                <header>
+                    <button name="action_generate_summary" type="object" string="Generate Summary" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <group string="Scope">
+                        <group>
+                            <field name="company_id"/>
+                            <field name="warehouse_id"/>
+                            <field name="include_waiting"/>
+                        </group>
+                        <group>
+                            <field name="response_status" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Summary">
+                        <field name="summary_text" readonly="1" widget="text"/>
+                    </group>
+                    <group string="Snapshot JSON" groups="stock.group_stock_manager">
+                        <field name="snapshot_json" readonly="1" widget="text"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_wms_ai_priority_whatif_form" model="ir.ui.view">
+        <field name="name">wms.ai.priority.whatif.form</field>
+        <field name="model">wms.ai.priority.whatif</field>
+        <field name="arch" type="xml">
+            <form string="AI What-If Simulator" create="0" delete="0">
+                <header>
+                    <button name="action_open_ai_configuration" type="object" string="AI Config" class="btn-secondary"/>
+                    <button name="action_run_simulation" type="object" string="Run Simulation" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <group string="Simulation Scope">
+                        <field name="company_id"/>
+                        <field name="warehouse_id"/>
+                    </group>
+                    <group string="Natural Language Prompt">
+                        <field name="prompt_input" widget="text"
+                            placeholder="Example: What if we increase SLA importance for marketplace orders and keep internal transfers lower?"/>
+                    </group>
+                    <group string="Simulation Summary">
+                        <field name="response_status" readonly="1"/>
+                        <field name="simulation_summary" readonly="1" widget="text"/>
+                    </group>
+                    <group string="Proposed Policy JSON" groups="stock.group_stock_manager">
+                        <field name="proposal_json" readonly="1" widget="text"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_wms_ai_priority_ai_config_wizard_form" model="ir.ui.view">
+        <field name="name">wms.ai.priority.ai.config.wizard.form</field>
+        <field name="model">wms.ai.priority.ai.config.wizard</field>
+        <field name="arch" type="xml">
+            <form string="AI Configuration" create="0" delete="0">
+                <header>
+                    <button name="action_test_connection" type="object" string="Test Connection" class="btn-secondary"/>
+                    <button name="action_save_configuration" type="object" string="Save" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <group string="LLM Provider Settings">
+                        <group>
+                            <field name="provider"/>
+                            <field name="model"/>
+                            <field name="api_key" password="True"/>
+                            <field name="test_result" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_wms_ai_priority_search_form" model="ir.ui.view">
+        <field name="name">wms.ai.priority.search.form</field>
+        <field name="model">wms.ai.priority.search</field>
+        <field name="arch" type="xml">
+            <form string="AI Warehouse Search" create="0" delete="0">
+                <header>
+                    <button name="action_run_search" type="object" string="Run Search" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <group string="Search Scope">
+                        <field name="company_id"/>
+                        <field name="warehouse_id"/>
+                    </group>
+                    <group string="Natural Language Query">
+                        <field name="query_text" widget="text"
+                            placeholder="Example: Show me ready pickings most likely to miss SLA today."/>
+                    </group>
+                    <group string="Search Results">
+                        <field name="result_count" readonly="1"/>
+                        <field name="result_summary" readonly="1" widget="text"/>
+                    </group>
+                    <group string="Matching Pickings">
+                        <field name="result_picking_ids" readonly="1" nolabel="1">
+                            <list>
+                                <field name="name"/>
+                                <field name="x_ai_priority_score"/>
+                                <field name="x_ai_priority_bucket"/>
+                                <field name="x_ai_recommended_action"/>
+                                <field name="x_effective_priority_deadline"/>
+                            </list>
+                        </field>
+                    </group>
+                    <group string="Interpreted Filters" groups="stock.group_stock_manager">
+                        <field name="search_json" readonly="1" widget="text"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_wms_ai_priority_queue_summary" model="ir.actions.act_window">
+        <field name="name">AI Queue Summary</field>
+        <field name="res_model">wms.ai.priority.queue.summary</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+    </record>
+
+    <record id="action_wms_ai_priority_whatif" model="ir.actions.act_window">
+        <field name="name">AI What-If Simulator</field>
+        <field name="res_model">wms.ai.priority.whatif</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+    </record>
+
+    <record id="action_wms_ai_priority_search" model="ir.actions.act_window">
+        <field name="name">AI Warehouse Search</field>
+        <field name="res_model">wms.ai.priority.search</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+    </record>
+
+    <record id="action_wms_ai_priority_ai_configuration" model="ir.actions.act_window">
+        <field name="name">AI Configuration</field>
+        <field name="res_model">wms.ai.priority.ai.config.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="odoo_picking_priority.view_wms_ai_priority_ai_config_wizard_form"/>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_wms_ai_priority_queue_summary" name="AI Queue Summary"
+        parent="odoo_picking_priority.menu_wms_ai_priority_root" action="action_wms_ai_priority_queue_summary"
+        sequence="13" groups="stock.group_stock_user"/>
+    <menuitem id="menu_wms_ai_priority_whatif" name="AI What-If Simulator"
+        parent="odoo_picking_priority.menu_wms_ai_priority_root" action="action_wms_ai_priority_whatif"
+        sequence="14" groups="stock.group_stock_manager"/>
+    <menuitem id="menu_wms_ai_priority_ai_configuration" name="AI Configuration"
+        parent="odoo_picking_priority.menu_wms_ai_priority_root" action="action_wms_ai_priority_ai_configuration"
+        sequence="11" groups="stock.group_stock_manager"/>
+    <menuitem id="menu_wms_ai_priority_search" name="AI Warehouse Search"
+        parent="odoo_picking_priority.menu_wms_ai_priority_root" action="action_wms_ai_priority_search"
+        sequence="16" groups="stock.group_stock_user"/>
+</odoo>
